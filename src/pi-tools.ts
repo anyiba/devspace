@@ -29,7 +29,6 @@ interface ToolContext {
   cwd: string;
   root: string;
   readRoots?: string[];
-  agentsNotice?: string;
 }
 
 function toMcpContent(result: AgentToolResult<unknown>): McpContent[] {
@@ -59,17 +58,12 @@ async function runTool<TInput, TDetails = unknown>(
   try {
     const result = await execute(input);
     return {
-      content: appendAgentsNotice(toMcpContent(result), context.agentsNotice),
+      content: toMcpContent(result),
       details: result.details,
     };
   } catch (error) {
-    return { content: appendAgentsNotice(formatToolError(error), context.agentsNotice), isError: true };
+    return { content: formatToolError(error), isError: true };
   }
-}
-
-function appendAgentsNotice(content: McpContent[], agentsNotice: string | undefined): McpContent[] {
-  if (!agentsNotice) return content;
-  return [...content, { type: "text", text: agentsNotice }];
 }
 
 export async function readFileTool(input: ReadToolInput, context: ToolContext): Promise<ToolResponse> {

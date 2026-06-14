@@ -43,8 +43,10 @@ interface ToolResultCard {
   summary?: Record<string, unknown>;
   agentsFiles?: Array<{
     path?: string;
-    alreadyLoaded?: boolean;
     content?: string;
+  }>;
+  availableAgentsFiles?: Array<{
+    path?: string;
   }>;
   skills?: Array<{
     name?: string;
@@ -414,6 +416,7 @@ function ToolPayloadView({
 
 function WorkspacePayload({ card }: { card: ToolResultCard }) {
   const agentsFiles = card.agentsFiles ?? [];
+  const availableAgentsFiles = card.availableAgentsFiles ?? [];
   const skills = card.skills ?? [];
   const lines = [
     card.workspaceId ? `Workspace: ${card.workspaceId}` : undefined,
@@ -421,6 +424,9 @@ function WorkspacePayload({ card }: { card: ToolResultCard }) {
     skills.length > 0
       ? `Skills: ${skills.map((skill) => skill.name ?? skill.path ?? "unnamed").join(", ")}`
       : "Skills: none",
+    availableAgentsFiles.length > 0
+      ? `Nested instructions: ${availableAgentsFiles.map((file) => file.path ?? "unknown").join(", ")}`
+      : undefined,
     agentsFiles.length > 0
       ? `\n${formatAgentsFilesForPayload(agentsFiles)}`
       : "\nAGENTS.md: none loaded",
@@ -541,6 +547,7 @@ function isExpandableCard(card: ToolResultCard): boolean {
       Number(card.summary?.skills ?? 0) > 0 ||
       Number(card.summary?.skillDiagnostics ?? 0) > 0 ||
       Boolean(card.agentsFiles?.length) ||
+      Boolean(card.availableAgentsFiles?.length) ||
       Boolean(card.skills?.length) ||
       Boolean(card.skillDiagnostics?.length)
     );
