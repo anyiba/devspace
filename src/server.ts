@@ -28,7 +28,7 @@ import { formatAgentsNotice, WorkspaceRegistry } from "./workspaces.js";
 
 type Transport = StreamableHTTPServerTransport;
 const WORKSPACE_APP_URI = "ui://pi-on-mcp/workspace-app.html";
-const WORKSPACE_APP_ASSET_VERSION = "20260531-1";
+const WORKSPACE_APP_ASSET_VERSION = "20260531-2";
 
 interface RunningServer {
   app: ReturnType<typeof createMcpExpressApp>;
@@ -72,6 +72,37 @@ function textSummary(content: ToolContent[]): { lines: number; characters: numbe
     lines: text.length === 0 ? 0 : text.split("\n").length,
     characters: text.length,
   };
+}
+
+function contentLineCount(content: string): number {
+  if (content.length === 0) return 0;
+  return content.endsWith("\n")
+    ? content.slice(0, -1).split("\n").length
+    : content.split("\n").length;
+}
+
+function newFilePatch(path: string, content: string): string {
+  const lines =
+    content.length === 0
+      ? []
+      : content.endsWith("\n")
+        ? content.slice(0, -1).split("\n")
+        : content.split("\n");
+  const hunkLength = lines.length;
+  const hunkRange = hunkLength === 0 ? "+0,0" : `+1,${hunkLength}`;
+  const body = lines.map((line) => `+${line}`).join("\n");
+
+  return [
+    `diff --git a/${path} b/${path}`,
+    "new file mode 100644",
+    "index 0000000..0000000",
+    "--- /dev/null",
+    `+++ b/${path}`,
+    `@@ -0,0 ${hunkRange} @@`,
+    body,
+  ]
+    .filter((line) => line.length > 0)
+    .join("\n");
 }
 
 function assetBaseUrl(config: ServerConfig): string {
@@ -430,7 +461,7 @@ function createMcpServer(
       if (response.isError) return response;
 
       const summary = {
-        lines: input.content.length === 0 ? 0 : input.content.split("\n").length,
+        lines: contentLineCount(input.content),
         characters: input.content.length,
       };
       const storedResult = results.put({
@@ -439,7 +470,10 @@ function createMcpServer(
         path: input.path,
         label: input.path,
         summary,
-        payload: { content: response.content },
+        payload: {
+          content: response.content,
+          patch: newFilePatch(input.path, input.content),
+        },
       });
 
       return {

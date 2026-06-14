@@ -22,9 +22,12 @@ body {
 .empty,
 .tool-card {
   width: 100%;
-  border: 1px solid var(--color-border-primary, #3a3a40);
+  border: 1px solid color-mix(in srgb, var(--color-border-primary, #3a3a40) 86%, transparent);
   border-radius: 8px;
-  background: var(--color-background-secondary, #28282d);
+  background: color-mix(in srgb, var(--color-background-secondary, #28282d) 92%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 7%, transparent) inset,
+    0 12px 30px color-mix(in srgb, black 18%, transparent);
   color: var(--color-text-primary, #f5f5f6);
 }
 
@@ -36,12 +39,12 @@ body {
 
 .tool-header {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto 22px;
+  grid-template-columns: 38px minmax(0, 1fr) auto 28px;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  min-height: 58px;
-  padding: 8px 12px;
+  min-height: 64px;
+  padding: 10px 12px 10px 14px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -51,7 +54,7 @@ body {
 }
 
 .tool-header:hover:not(:disabled) {
-  background: var(--color-background-tertiary, #333338);
+  background: color-mix(in srgb, var(--color-background-tertiary, #333338) 72%, transparent);
 }
 
 .tool-header:disabled {
@@ -60,15 +63,24 @@ body {
 
 .tool-icon {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-border-primary, #3a3a40) 55%, transparent);
   border-radius: 8px;
-  background: var(--color-background-primary, #17181c);
-  color: var(--color-text-secondary, #b9bac2);
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
-  font-size: 18px;
-  font-weight: 700;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-background-tertiary, #3a3a42) 72%, transparent),
+      color-mix(in srgb, var(--color-background-primary, #17181c) 90%, transparent)
+    );
+  color: var(--color-text-primary, #f5f5f6);
+}
+
+.icon-svg {
+  width: 19px;
+  height: 19px;
+  display: block;
 }
 
 .tool-main {
@@ -105,9 +117,10 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  padding: 0 8px;
-  border: 1px solid var(--color-border-primary, #3a3a40);
+  padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--color-border-primary, #3a3a40) 80%, transparent);
   border-radius: 999px;
+  background: color-mix(in srgb, var(--color-background-primary, #17181c) 42%, transparent);
   color: var(--color-text-secondary, #d6d6dc);
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: var(--font-text-sm-size, 12px);
@@ -123,9 +136,30 @@ body {
 }
 
 .chevron {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 7px;
   color: var(--color-text-tertiary, #a3a3aa);
-  font-size: 16px;
-  text-align: center;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.tool-header:hover:not(:disabled) .chevron {
+  background: color-mix(in srgb, var(--color-background-primary, #17181c) 58%, transparent);
+  color: var(--color-text-primary, #f5f5f6);
+}
+
+.chevron .icon-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chevron.expanded {
+  transform: rotate(180deg);
 }
 
 .tool-body {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { PatchDiff } from "@pierre/diffs/react";
 import {
@@ -237,9 +238,7 @@ function AppRoot() {
             </span>
           </span>
           <SummaryBadges card={card} />
-          <span className="chevron" aria-hidden="true">
-            {expandable ? (expanded ? "^" : "v") : ""}
-          </span>
+          <ChevronIcon expanded={expanded} visible={expandable} />
         </button>
 
         {expanded ? (
@@ -276,7 +275,7 @@ function ToolPayloadView({
     return <StatusLine message={errorMessage ?? "Unable to load details."} tone="error" />;
   }
 
-  if (card.tool === "edit_file") {
+  if (card.tool === "edit_file" || card.tool === "write_file") {
     const patch = payload?.patch || payload?.diff;
     if (!patch) return <StatusLine message="Diff payload is not available." />;
 
@@ -331,14 +330,14 @@ function SummaryBadges({ card }: { card: ToolResultCard }) {
   }
 
   if (card.tool === "write_file") {
-    return <span className="badge">{String(summary.characters ?? 0)} chars</span>;
+    return <span className="badge">{String(summary.lines ?? 0)} lines</span>;
   }
 
   return <span className="badge">{String(summary.lines ?? 0)} lines</span>;
 }
 
 function getToolDisplay(card: ToolResultCard): {
-  icon: string;
+  icon: ReactNode;
   title: string;
   label: string;
   tone: string;
@@ -347,22 +346,143 @@ function getToolDisplay(card: ToolResultCard): {
 
   switch (card.tool) {
     case "open_workspace":
-      return { icon: "W", title: "Workspace", label, tone: "workspace" };
+      return { icon: <FolderIcon />, title: "Workspace", label, tone: "workspace" };
     case "read_file":
-      return { icon: "R", title: "Read File", label, tone: "read" };
+      return { icon: <FileIcon />, title: "Read File", label, tone: "read" };
     case "write_file":
-      return { icon: "W", title: "Write File", label, tone: "write" };
+      return { icon: <FilePlusIcon />, title: "Write File", label, tone: "write" };
     case "edit_file":
-      return { icon: "+", title: "Edit File", label, tone: "edit" };
+      return { icon: <EditIcon />, title: "Edit File", label, tone: "edit" };
     case "grep_files":
-      return { icon: "G", title: "Grep Files", label, tone: "search" };
+      return { icon: <SearchIcon />, title: "Grep Files", label, tone: "search" };
     case "find_files":
-      return { icon: "F", title: "Find Files", label, tone: "search" };
+      return { icon: <FilesIcon />, title: "Find Files", label, tone: "search" };
     case "list_directory":
-      return { icon: "L", title: "List Directory", label, tone: "directory" };
+      return { icon: <ListIcon />, title: "List Directory", label, tone: "directory" };
     case "run_shell":
-      return { icon: "$", title: "Run Shell", label, tone: "shell" };
+      return { icon: <TerminalIcon />, title: "Run Shell", label, tone: "shell" };
   }
+}
+
+function IconSvg({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="icon-svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function ChevronIcon({
+  expanded,
+  visible,
+}: {
+  expanded: boolean;
+  visible: boolean;
+}) {
+  if (!visible) return <span className="chevron" aria-hidden="true" />;
+
+  return (
+    <span className={`chevron ${expanded ? "expanded" : ""}`} aria-hidden="true">
+      <IconSvg>
+        <path d="m6 9 6 6 6-6" />
+      </IconSvg>
+    </span>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <IconSvg>
+      <path d="M3 7.5h6l2 2h10" />
+      <path d="M3 7.5v10A2.5 2.5 0 0 0 5.5 20h13a2.5 2.5 0 0 0 2.5-2.5v-8H3" />
+    </IconSvg>
+  );
+}
+
+function FileIcon() {
+  return (
+    <IconSvg>
+      <path d="M14 3v5h5" />
+      <path d="M6 3h8l5 5v13H6z" />
+      <path d="M9 13h6" />
+      <path d="M9 17h4" />
+    </IconSvg>
+  );
+}
+
+function FilePlusIcon() {
+  return (
+    <IconSvg>
+      <path d="M14 3v5h5" />
+      <path d="M6 3h8l5 5v13H6z" />
+      <path d="M12 12v6" />
+      <path d="M9 15h6" />
+    </IconSvg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <IconSvg>
+      <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </IconSvg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <IconSvg>
+      <circle cx="11" cy="11" r="6" />
+      <path d="m16 16 4 4" />
+    </IconSvg>
+  );
+}
+
+function FilesIcon() {
+  return (
+    <IconSvg>
+      <path d="M8 7V4h9l4 4v10h-3" />
+      <path d="M12 4v5h5" />
+      <path d="M4 7h9l4 4v10H4z" />
+      <path d="M13 7v5h4" />
+    </IconSvg>
+  );
+}
+
+function ListIcon() {
+  return (
+    <IconSvg>
+      <path d="M8 6h12" />
+      <path d="M8 12h12" />
+      <path d="M8 18h12" />
+      <path d="M4 6h.01" />
+      <path d="M4 12h.01" />
+      <path d="M4 18h.01" />
+    </IconSvg>
+  );
+}
+
+function TerminalIcon() {
+  return (
+    <IconSvg>
+      <path d="m5 7 5 5-5 5" />
+      <path d="M12 17h7" />
+    </IconSvg>
+  );
 }
 
 function payloadText(payload: ToolPayload | null): string {
