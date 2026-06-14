@@ -41,6 +41,18 @@ interface ToolResultCard {
   root?: string;
   status?: string;
   summary?: Record<string, unknown>;
+  agentsFiles?: Array<{
+    path?: string;
+    alreadyLoaded?: boolean;
+    content?: string;
+  }>;
+  skills?: Array<{
+    name?: string;
+    description?: string;
+    path?: string;
+  }>;
+  skillDiagnostics?: unknown[];
+  instruction?: string;
 }
 
 interface ToolContent {
@@ -147,7 +159,11 @@ function AppRoot() {
     appRef.current = createdApp;
 
     createdApp.ontoolresult = (result) => {
-      const structured = cardFromMeta(result) ?? result.structuredContent;
+      const structuredContent = getStructuredContent<Partial<ToolResultCard>>(result);
+      const metaCard = cardFromMeta(result);
+      const structured = metaCard
+        ? { ...structuredContent, ...metaCard }
+        : structuredContent;
       const tool = toolNameFromMeta(result);
       const resultId = resultIdFromMeta(result);
       if (!tool || !isToolResultCard(structured)) {
@@ -368,6 +384,10 @@ function ToolPayloadView({
     return <StatusLine message={errorMessage ?? "Unable to load details."} tone="error" />;
   }
 
+  if (card.tool === "open_workspace") {
+    return <WorkspacePayload card={card} />;
+  }
+
   if (isEditTool(card.tool) || isWriteTool(card.tool)) {
     const patch = payload?.patch || payload?.diff;
     if (!patch) return <StatusLine message="Diff payload is not available." />;
@@ -390,6 +410,25 @@ function ToolPayloadView({
   }
 
   return <pre className={`text-payload ${card.tool}`}>{text}</pre>;
+}
+
+function WorkspacePayload({ card }: { card: ToolResultCard }) {
+  const agentsFiles = card.agentsFiles ?? [];
+  const skills = card.skills ?? [];
+  const diagnostics = card.skillDiagnostics ?? [];
+  const lines = [
+    card.workspaceId ? `Workspace: ${card.workspaceId}` : undefined,
+    card.root ? `Root: ${card.root}` : undefined,
+    agentsFiles.length > 0
+      ? `AGENTS.md: ${agentsFiles.map((file) => file.path ?? "AGENTS.md").join(", ")}`
+      : "AGENTS.md: none loaded",
+    skills.length > 0
+      ? `Skills: ${skills.map((skill) => skill.name ?? skill.path ?? "unnamed").join(", ")}`
+      : "Skills: none",
+    diagnostics.length > 0 ? `Skill diagnostics: ${diagnostics.length}` : undefined,
+  ].filter(Boolean);
+
+  return <pre className="text-payload open_workspace">{lines.join("\n")}</pre>;
 }
 
 function FilePayload({
@@ -486,6 +525,17 @@ function SummaryBadges({ card }: { card: ToolResultCard }) {
 }
 
 function isExpandableCard(card: ToolResultCard): boolean {
+  if (card.tool === "open_workspace") {
+    return (
+      Number(card.summary?.agentsFiles ?? 0) > 0 ||
+      Number(card.summary?.skills ?? 0) > 0 ||
+      Number(card.summary?.skillDiagnostics ?? 0) > 0 ||
+      Boolean(card.agentsFiles?.length) ||
+      Boolean(card.skills?.length) ||
+      Boolean(card.skillDiagnostics?.length)
+    );
+  }
+
   return Boolean(card.resultId);
 }
 
